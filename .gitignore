@@ -1,2 +1,7 @@
 dataset
 .vscode
+DatasetGeneration/Preprocessing/__pycache__/
+DatasetGeneration/Preprocessing/test/__pycache__/
+DatasetGeneration/Preprocessing/.pytest_cache/
+DatasetGeneration/Preprocessing/test/.pytest_cache/
+DatasetGeneration/.pytest_cache/
