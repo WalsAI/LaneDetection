@@ -32,14 +32,14 @@ class ProcessingPolygons:
         self.path_to_dataset = path_to_dataset
         self.path_to_output_csv = path_to_output_csv
 
-    def _preprocess_file(self, file_path: str) -> Union[str, List[float], List[float]]:
+    def _preprocess_file(self, file_path: str) -> Union[str, List[List[float]], List[float]]:
         """
             Preprocess ground truth file and then add it to csv file.
 
             Args:
                 file_path: Path to file for preprocessing.
         """
-        image_path = LabelToImageConverter.LabelToImage(file_path)
+        image_path = self.path_to_dataset + '/' + LabelToImageConverter.LabelToImage(file_path)
         
         # list of polygon coordinates
         polygons = list()
@@ -63,7 +63,7 @@ class ProcessingPolygons:
         return image_path, polygons, classes
     
     # TODO: have to check if this is the expected format
-    def preprocess_gt_folder(self) -> Dict[str, Union[List[str], List[np.ndarray], List[np.ndarray]]]:
+    def preprocess_gt_folder(self) -> Dict[str, Union[List[str], List[List[List[str]]], List[np.ndarray]]]:
         """
         Preprocess folder containing polygons and classes as labels.
         """
