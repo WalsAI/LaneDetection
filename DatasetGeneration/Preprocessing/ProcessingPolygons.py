@@ -1,11 +1,12 @@
 # local imports
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Tuple
 
 # third-party imports
 import numpy as np
 import os
 import logging
 import pandas as pd
+import cv2
 
 # LaneDetection imports
 from LabelToImageConverter import LabelToImageConverter
@@ -14,33 +15,60 @@ logging.getLogger('ProcessingPolygons')
 
 class ProcessingPolygons:
     """
-    Preprocessing polygons from dataset in order to generate masks with Segment Anything Model (SAM) as states in `https://arxiv.org/pdf/2304.02643.pdf`.
+    Preprocessing polygons from dataset to convert them to masks.
     """
     def __init__(
         self,
-        path_to_dataset: str,
-        path_to_output_csv: str,
+        path_to_labels: str,
+        path_to_images: str,
+        path_to_masks: str,
     ) -> None:
         """
-        Initialization for preprocessing the polygons in order
-        to match Segment Anything Model (SAM) as states in LabelAnything repository `https://github.com/WalsAI/LabelAnything`.
+        Initialization for preprocessing the polygons to prepare them for conversion to actual masks.
         
         Args:
             path_to_dataset: Path to directory for labels (train/val/test).
-            path_to_output_csv: Path to output csv file in format suggested in LabelAnything `https://github.com/WalsAI/LabelAnything`
+            TODO: add specifications
         """
-        self.path_to_dataset = path_to_dataset
-        self.path_to_output_csv = path_to_output_csv
+        self.path_to_labels = path_to_labels
+        self.path_to_images = path_to_images
+        self.path_to_masks = path_to_masks
 
-    def _preprocess_file(self, file_path: str) -> Union[str, List[List[float]], List[float]]:
+    @staticmethod
+    def _get_image_size(image_path: str) -> Tuple[int]:
+        """
+        Get the size of the image.
+
+        Args:
+            image_path: Path to image for getting the size.
+        """
+        image = cv2.imread(image_path)
+        return image.shape[:2]
+
+    @staticmethod
+    def _postprocess_polygon(polygon: List[str], image_size: Tuple[int]) -> np.ndarray:
+        """
+        Postprocess the polygon to fit the image size.
+
+        Args:
+            polygon: List of polygon coordinates.
+            image_size: Size of the image.
+        """
+        processed_polygon = []
+        for i in range(0, len(polygon), 2):
+            point = polygon[i:i+2]
+            # cv2 uses (height, width) format
+            point = [float(point[0]) * image_size[1], float(point[1]) * image_size[0]]
+            processed_polygon.append(point)
+        return np.array(processed_polygon)
+
+    def _preprocess_file(self, file_path: str, image_size: Tuple[int]) -> Union[str, List[List[float]], List[float]]:
         """
             Preprocess ground truth file and then add it to csv file.
 
             Args:
                 file_path: Path to file for preprocessing.
-        """
-        image_path = self.path_to_dataset + '/' + LabelToImageConverter.LabelToImage(file_path)
-        
+        """        
         # list of polygon coordinates
         polygons = list()
 
@@ -55,53 +83,87 @@ class ProcessingPolygons:
                 # store in a variabile in order to have the same format
                 cls = int(line_split[0])
                 polygon = line_split[1:]
-                polygon = [float(p) for p in polygon]
+                polygon = self._postprocess_polygon(polygon, image_size)
 
                 polygons.append(polygon)
                 classes.append(cls)
                 
-        return image_path, polygons, classes
+        return polygons, classes
     
-    # TODO: have to check if this is the expected format
-    def preprocess_gt_folder(self) -> Dict[str, Union[List[str], List[List[List[str]]], List[np.ndarray]]]:
+    @staticmethod
+    def _get_mask_from_polygons(polygons: List[np.ndarray], labels: List[int], image_size) -> np.ndarray:
         """
-        Preprocess folder containing polygons and classes as labels.
-        """
-        labels = sorted(os.listdir(self.path_to_dataset))
-        
-        image_paths = list()
-        polygons = list()
-        classes = list()
-        for label in labels:
-            logging.info(f'Currently processing {label}...')
-            img_path, polygon, cls = self._preprocess_file(self.path_to_dataset + '/' + label)
-            image_paths.append(img_path)
-            polygons.append(polygon)
-            classes.append(cls)
-        
-        return {
-            'Image_Paths': image_paths,
-            'polygons': polygons,
-            'classes': classes
-        }
-
-    def df_to_csv(self, df: Dict[str, Union[List[str], List[np.ndarray], List[np.ndarray]]]) -> None:
-        """
-        Convert dictionary to csv file.
+        Get mask from polygons and labels.
 
         Args:
-            df: Dictionary containing the keys 'Image_Paths', 'polygons', 'classes'.
+            polygons: List of polygons.
+            labels: List of labels.
         """
-        df = pd.DataFrame(df)
-        df.to_csv(self.path_to_output_csv, index=False)
-        logging.info(f'CSV file saved at {self.path_to_output_csv}')
+        masks = []
+        for i in range(len(polygons)):
+            mask = np.zeros(image_size)
+            mask = cv2.fillPoly(mask, np.int32([polygons[i]]), int(labels[i]))
+            masks.append(mask)
+        return masks
+
+    @staticmethod
+    def _concatenate_masks(masks):
+        """
+        Concatenate masks.
+
+        Args:
+            masks: List of masks.
+        """
+        # All the masks should have the same shape since they are from the same image
+        output = np.zeros((masks[0].shape[0], masks[0].shape[1]))
+        for mask in masks:
+            output = np.where(output == 0, mask, output)
+        return output
+
+    def preprocess_gt_folder(self) -> Dict[str, Union[List[str], List[List[List[str]]], List[np.ndarray]]]:
+        """
+        Preprocess folder containing polygons and classes as labels and transform the polygons into segmentation GT.
+        """
+        labels = sorted(os.listdir(self.path_to_labels))
+        
+        for label in labels:
+            logging.info(f'Currently processing {label}...')
+            image_path = self.path_to_images + '/' + LabelToImageConverter.LabelToImage(label, '.jpg')
+            image_size = self._get_image_size(image_path)
+            polygon, cls = self._preprocess_file(self.path_to_labels + '/' + label, image_size)
+            # convert polygons and classes into a segmentation mask stored in path_to_masks folder
+            mask = self._get_mask_from_polygons(polygon, cls, image_size)
+            mask = self._concatenate_masks(mask)
+            self._write_mask(mask, self.path_to_masks, self._get_image_title(image_path, '.png'))
+
+    @staticmethod
+    def _get_image_title(image_path: str, format: str) -> str:
+        """
+        Get image title from image path.
+
+        Args:
+            image_path: Path to image.
+        """
+        return image_path.split('/')[-1][:-4] + format
+
+    @staticmethod
+    def _write_mask(mask: np.ndarray, path_to_mask, image_title) -> None:
+        """
+        Write mask to file.
+
+        Args:
+            mask: GT mask.
+            path_to_mask: Path to mask.
+            image_title: title of the current image.
+        """
+        cv2.imwrite(path_to_mask + '/' + image_title, mask)
+        
     
     def __call__(self) -> None:
         """
         Preprocess polygons and classes and then save them to csv file.
         """
-        df = self.preprocess_gt_folder()
-        self.df_to_csv(df)
+        self.preprocess_gt_folder()
             
                 
             
