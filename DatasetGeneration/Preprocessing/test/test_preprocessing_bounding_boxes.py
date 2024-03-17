@@ -2,14 +2,6 @@
     Tests for PreprocessingBoundingBoxes class.
 """
 
-# local imports and paths addition
-import sys
-sys.path.append('..')
-sys.path.append('Preprocessing')
-sys.path.append('LaneDetection/DatasetGeneration/Preprocessing')
-sys.path.append('/teamspace/studios/this_studio/LaneDetection/DatasetGeneration/Preprocessing')
-
-
 # LaneDetection imports
 from ProcessingPolygons import ProcessingPolygons
 from LabelToImageConverter import LabelToImageConverter

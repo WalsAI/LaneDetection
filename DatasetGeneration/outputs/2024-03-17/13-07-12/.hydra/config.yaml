@@ -1,0 +1,8 @@
+paths:
+  base_path: /teamspace/studios/this_studio/LaneDetection/dataset
+  labels_dir: labels
+  images_dir: images
+  masks_dir: masks
+  test_dir: test
+  train_dir: train
+  val_dir: valid

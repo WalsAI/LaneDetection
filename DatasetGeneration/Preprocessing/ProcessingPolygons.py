@@ -9,9 +9,8 @@ import pandas as pd
 import cv2
 
 # LaneDetection imports
+from DatasetGeneration.utilities.utils import configure_preprocessing_logger
 from LabelToImageConverter import LabelToImageConverter
-
-logging.getLogger('ProcessingPolygons')
 
 class ProcessingPolygons:
     """
@@ -22,6 +21,7 @@ class ProcessingPolygons:
         path_to_labels: str,
         path_to_images: str,
         path_to_masks: str,
+        mode: str = 'train'
     ) -> None:
         """
         Initialization for preprocessing the polygons to prepare them for conversion to actual masks.
@@ -33,6 +33,8 @@ class ProcessingPolygons:
         self.path_to_labels = path_to_labels
         self.path_to_images = path_to_images
         self.path_to_masks = path_to_masks
+        self.logger = configure_preprocessing_logger(mode)
+        self.mode = mode
 
     @staticmethod
     def _get_image_size(image_path: str) -> Tuple[int]:
@@ -107,7 +109,7 @@ class ProcessingPolygons:
         return masks
 
     @staticmethod
-    def _concatenate_masks(masks):
+    def _concatenate_masks(masks, image_size):
         """
         Concatenate masks.
 
@@ -115,7 +117,7 @@ class ProcessingPolygons:
             masks: List of masks.
         """
         # All the masks should have the same shape since they are from the same image
-        output = np.zeros((masks[0].shape[0], masks[0].shape[1]))
+        output = np.zeros(image_size)
         for mask in masks:
             output = np.where(output == 0, mask, output)
         return output
@@ -125,16 +127,17 @@ class ProcessingPolygons:
         Preprocess folder containing polygons and classes as labels and transform the polygons into segmentation GT.
         """
         labels = sorted(os.listdir(self.path_to_labels))
-        
+        self.logger.info(f'Generating dataset for {self.mode}')
         for label in labels:
-            logging.info(f'Currently processing {label}...')
+            self.logger.info(f'Currently processing {label}...')
             image_path = self.path_to_images + '/' + LabelToImageConverter.LabelToImage(label, '.jpg')
             image_size = self._get_image_size(image_path)
             polygon, cls = self._preprocess_file(self.path_to_labels + '/' + label, image_size)
             # convert polygons and classes into a segmentation mask stored in path_to_masks folder
             mask = self._get_mask_from_polygons(polygon, cls, image_size)
-            mask = self._concatenate_masks(mask)
+            mask = self._concatenate_masks(mask, image_size)
             self._write_mask(mask, self.path_to_masks, self._get_image_title(image_path, '.png'))
+        self.logger.info(f'Finished generating dataset for {self.mode}')
 
     @staticmethod
     def _get_image_title(image_path: str, format: str) -> str:
