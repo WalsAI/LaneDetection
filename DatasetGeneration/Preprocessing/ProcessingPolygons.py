@@ -27,8 +27,11 @@ class ProcessingPolygons:
         Initialization for preprocessing the polygons to prepare them for conversion to actual masks.
         
         Args:
-            path_to_dataset: Path to directory for labels (train/val/test).
-            TODO: add specifications
+            path_to_labels: Path to directory for labels.
+            path_to_images: Path to directory for images.
+            path_to_masks: Path to directory for masks.
+            mode: Mode of the dataset (i.e. train, val, test).
+            
         """
         self.path_to_labels = path_to_labels
         self.path_to_images = path_to_images
@@ -70,6 +73,7 @@ class ProcessingPolygons:
 
             Args:
                 file_path: Path to file for preprocessing.
+                image_size: Size of the image.
         """        
         # list of polygon coordinates
         polygons = list()
@@ -100,6 +104,7 @@ class ProcessingPolygons:
         Args:
             polygons: List of polygons.
             labels: List of labels.
+            image_size: Size of the image.
         """
         masks = []
         for i in range(len(polygons)):
@@ -109,12 +114,13 @@ class ProcessingPolygons:
         return masks
 
     @staticmethod
-    def _concatenate_masks(masks, image_size):
+    def _concatenate_masks(masks: List[np.ndarray], image_size: Tuple[int]):
         """
         Concatenate masks.
 
         Args:
             masks: List of masks.
+            image_size: Size of the image.
         """
         # All the masks should have the same shape since they are from the same image
         output = np.zeros(image_size)
@@ -150,7 +156,7 @@ class ProcessingPolygons:
         return image_path.split('/')[-1][:-4] + format
 
     @staticmethod
-    def _write_mask(mask: np.ndarray, path_to_mask, image_title) -> None:
+    def _write_mask(mask: np.ndarray, path_to_mask: str, image_title: str) -> None:
         """
         Write mask to file.
 
