@@ -19,9 +19,9 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 
-def test_preprocessing_bounding_boxes():
+def test_preprocessing_polygons():
     """
-    Test for PreprocessingBoundingBoxes class.
+    Test for PreprocessingPolygons class.
     """
 
     dummy_label = '9a_jpg.rf.9e955d213a2b8656f81fb547616447f0.txt'
@@ -34,12 +34,6 @@ def test_preprocessing_bounding_boxes():
     polygons, classes = preprocessing_polygons._preprocess_file(dummy_label_folder + '/' + dummy_label, (640, 640))
     
     assert len(polygons) == 9
-
-    true = 'remy is crappy'
-
-    assert 'remy is crappy' == true
-
-
 
     assert len(classes) == 9
 
