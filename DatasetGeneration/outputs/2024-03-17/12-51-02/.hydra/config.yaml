@@ -1,4 +1,0 @@
-paths:
-  path_to_labels: /teamspace/studios/this_studio/LaneDetection/dataset/test/labels
-  path_to_images: /teamspace/studios/this_studio/LaneDetection/dataset/test/images
-  path_to_masks: /teamspace/studios/this_studio/LaneDetection/dataset/test/masks
