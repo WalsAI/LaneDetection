@@ -10,3 +10,5 @@ DatasetGeneration/Preprocessing/test/mask_segmentation.png
 DatasetGeneration/outputs/
 DatasetGeneration/logs/*
 .pytest_cache/
+Data/outputs/
+Data/logs/*
