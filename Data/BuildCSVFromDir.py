@@ -43,3 +43,6 @@ class BuildCSVFromDir:
         Call the build_csv method.
         """
         self.build_csv()
+        
+        # we can use an index here since we have only one handler
+        self.logger.removeHandler(self.logger.handlers[0])

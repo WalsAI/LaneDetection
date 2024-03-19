@@ -2,7 +2,7 @@ from BuildCSVFromDir import BuildCSVFromDir
 import hydra
 from omegaconf import DictConfig
 
-@hydra.main(config_path='hydra_config', config_name='config')
+@hydra.main(config_path='hydra_config', config_name='config', version_base=None)
 def main(cfg: DictConfig):
     """
     Main function to build the csv file from the directory of images and masks.
