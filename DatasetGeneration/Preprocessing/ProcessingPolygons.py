@@ -173,6 +173,9 @@ class ProcessingPolygons:
         Preprocess polygons and classes and then save them to csv file.
         """
         self.preprocess_gt_folder()
+        
+        # we can use an index here since we have only one handler
+        self.logger.removeHandler(self.logger.handlers[0])
             
                 
             
