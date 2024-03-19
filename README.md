@@ -1,4 +1,4 @@
 # LaneDetection
-# Dataset Generation
-export PYTHONPATH=/teamspace/studios/this_studio/LaneDetection/DatasetGeneration/:/teamspace/studios/this_
-studio/LaneDetection/:/teamspace/studios/this_studio/LaneDetection/DatasetGeneration/Preprocessing/
+
+# After cloning the repository please make sure that you set the PYTHONPATH environment variable like this
+export PYTHONPATH=DatasetGeneration/:DatasetGeneration/Preprocessing/:Data/
