@@ -49,13 +49,13 @@ class RoadMarkingDataset(Dataset):
         # RGB images
         image = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
         # set -1 flag to read the image as it is
-        mask = cv2.imread(mask_path, -1)
+        mask = np.expand_dims(cv2.imread(mask_path, -1), axis=-1)
 
         if self.transform:
             image = self.transform(image)
         if self.gt_transform:
             mask = self.gt_transform(mask)
         
-        return image, mask.astype(np.float32)
+        return image, mask
 
         
