@@ -16,3 +16,4 @@ Data/__pycache__
 utilities/__pycache__/utils.cpython-310.pyc
 test_dataloader.ipynb
 ../utils/
+test/__pycache__/
