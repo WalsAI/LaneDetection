@@ -12,7 +12,6 @@ def test_dataloader(input_dict):
 
     train_loader = dataloader.train_dataloader()
     image, mask = next(iter(train_loader))
-    print(image.shape)
     assert image.shape == (1, 3, 640, 640)
     assert mask.shape == (1, 1, 640, 640)
 
