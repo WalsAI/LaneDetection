@@ -1,3 +1,0 @@
-[submodule "Mask2Former"]
-    path = Mask2Former
-    url = https://github.com/facebookresearch/Mask2Former
